@@ -65,6 +65,20 @@ Notice in the above example that the argument p collects the values of the gramm
 
 I will be taking an iterative approach to modifying the grammar. Ply can help me identify ambiguity and other grammar specification errors and I intend to use this feature while I modify the kxi grammar to be amenable to an LR1 parse.
 
+There are a few obvious modifications I will briefly describe. All usage of the `*` operator will have to be broken into two rules, for example if the rule is
+
+```
+a->b*
+```
+
+I will replace it with
+
+```
+a->b
+a->bb
+a->lambda
+```
+
 Ambiguous grammar speicifcations will present in ply as shift/reduce or reduce reduce conflicts. By default shift/reduce conflicts are resolved in favor of shifting. This would be correct behavior for the classic `dangling else` problem, but won't properly adress all shift/reduce conflicts.
 
 #### Shift/Reduce Conflicts
@@ -194,3 +208,5 @@ class Visitor(ABC):
 ```
 
 ### AST design
+
+![Alt text](images/AST.png)
