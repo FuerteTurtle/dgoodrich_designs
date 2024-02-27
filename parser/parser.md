@@ -65,7 +65,7 @@ Notice in the above example that the argument p collects the values of the gramm
 
 I will be taking an iterative approach to modifying the grammar. Ply can help me identify ambiguity and other grammar specification errors and I intend to use this feature while I modify the kxi grammar to be amenable to an LR1 parse.
 
-There are a few obvious modifications I will briefly describe. All usage of the `*` operator will have to be broken into two rules, for example if the rule is
+There are a few obvious modifications I will briefly describe. All usage of the `*` operator will have to be broken into three rules, for example if the rule is
 
 ```
 a->b*
@@ -74,9 +74,104 @@ a->b*
 I will replace it with
 
 ```
-a->b
-a->bb
-a->lambda
+a->b_
+b_->b_b
+b_->lambda
+b->whatever
+```
+
+Following is the grammar as I will be encoding it for ply
+
+```md
+compilation_unit ::= class_definition_0 VOID MAIN LPAREN RPAREN block
+class_definition_0 ::= class_definition_0 class_definition
+class_defition_0 ::= lambda
+class_definition ::= CLASS identifier LCURLY class_member_definition_0 RCURLY
+scalar_type ::= VOID | INT | CHAR | BOOL | STRING| identifier
+type ::= scalar_type brackets_0
+brackets_0 ::= brackets_0 LSQUARE RSQUARE
+brackets_0 ::= lambda
+modifier ::= PUBLIC | PRIVATE
+class_member_definition_0 ::= class_member_definition_0 class_member_definition
+class_member_definition_0 ::= lambda
+class_member_definition ::= method_declaration | data_member_declaration | constructor_declaration
+data_member_declaration ::= STATIC modifier variable_declaration
+data_member_declaration ::= modifier variable_declaration
+method_declaration ::= STATIC modifier type method_suffix
+method_declaration ::= modifier type method_suffix
+constructor declaration ::= method_suffix
+method_suffix ::= identifier LPAREN parameter_list RPAREN block
+method_suffix ::= indentifier LPAREN RPAREN block
+parameter_list ::= parameter parameter_0
+parameter_0 ::= COMMA parameter
+parameter_0 ::= lambda
+parameter ::= type identifier
+variable_declaration ::= type identifier initializer
+variable_declaration ::= type identifier
+initializer ::= EQ expression
+statement ::= IF LPAREN expression RPAREN statement ELSE statement
+statement ::= IF LPAREN expression RPAREN statement
+statement ::= WHILE LPAREN expression RPAREN statement
+statement ::= FOR LPAREN for_init_0 expression SEMICOLON for_incr RPAREN statement
+for_init_0 ::= expression SEMICOLON
+for_init_0 ::= lambda
+statement ::= RETURN expression SEMICOLON
+statement ::= RETURN SEMICOLON
+statement ::= COUT LT LT expression SEMICOLON
+statement ::= CIN GT GT expression SEMICOLON
+statement ::= SWITCH LPAREN expression RPAREN case_block
+statement ::= BREAK SEMICOLON
+statement ::= expression SEMICOLON
+statement ::= block
+statement ::= variable_declaration
+block ::= LCURLY statement_0 RCURLY
+statement_0 ::= statement_0 statement
+statement_0 ::= lambda
+case_block ::= LCURLY case_0 DEFAULT COLON statement_0 RCURLY
+case_0 ::= case_0 case
+case_0 ::= lambda
+case ::= CASE INTLIT COLON statement_0
+case ::= CASE CHARLIT COLON statement_0
+expression ::= expression EQ expression
+expression ::= expression PLUSEQ expression
+expression ::= expression MINUSEQ expression
+expression ::= expression TIMESEQ expression
+expression ::= expression DIVIDEEQ expression
+expression ::= expression PLUS expression
+expression ::= expression MINUS expression
+expression ::= expression TIMES expression
+expression ::= expression DIVIDE expression
+expression ::= expression EQEQ expression
+expression ::= expression NOTEQ expression
+expression ::= expression LT expression
+expression ::= expression GT expression
+expression ::= expression LEQ expression
+expression ::= expression GEQ expression
+expression ::= expression AND expression
+expression ::= expression OR expression
+expression ::= NOT expression
+expression ::= PLUS expression
+expression ::= MINUS expression
+expression ::= LPAREN expression RPAREN
+expression ::= INTLIT
+expression ::= CHARLIT
+expression ::= STRINGLIT
+expression ::= TRUE
+expression ::= FALSE
+expression ::= NULL
+expression ::= THIS
+expression ::= identifier
+expression ::= NEW type arguments
+expression ::= NEW type index
+expression ::= expression DOT identifier
+expression ::= expression index
+expression ::= expression arguments
+arguments ::= LPAREN argument_list RPAREN
+arguments ::= LPAREN RPAREN
+argument_list ::= expression expression_0
+expression_0 ::= COMMA expression
+expression_0 ::= lambda
+index ::= LSQUARE expression RSQUARE
 ```
 
 Ambiguous grammar speicifcations will present in ply as shift/reduce or reduce reduce conflicts. By default shift/reduce conflicts are resolved in favor of shifting. This would be correct behavior for the classic `dangling else` problem, but won't properly adress all shift/reduce conflicts.
@@ -105,7 +200,7 @@ The specific ply shift/reduce order is as follows
 4. If nothing is known about the precedence, shift/reduce conflicts are resolved in favor of shifting (the default).
 ```
 
-There is also something for "fictitious tokens" The example being a unary minus operator. I will come back to that if necessary.
+                                                                                                                                                                                                        There is also something for "fictitious tokens" The example being a unary minus operator. I will come back to that if necessary.
 
 Lastly there is a non-associativity option which would throw a parsing error for an expression that shouldn't chain. For example if `a+b+c` wasn't allowed for some reason you could specify
 
@@ -210,3 +305,7 @@ class Visitor(ABC):
 ### AST design
 
 ![Alt text](images/AST.png)
+
+The image itself is a bit annoying to update. A link to the live file should be more up to date.
+
+[ast](https://www.figma.com/proto/Z4K1w2PnONXYDoOYIDoP1K/Abstract-Syntax-Tree?type=design&node-id=11-679&t=159TUVwSnwsoP0Jj-0&scaling=min-zoom&page-id=0%3A1)
